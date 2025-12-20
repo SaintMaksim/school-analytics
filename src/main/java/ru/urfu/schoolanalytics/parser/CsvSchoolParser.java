@@ -1,11 +1,8 @@
 package ru.urfu.schoolanalytics.parser;
 
 import ru.urfu.schoolanalytics.model.School;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,58 +18,86 @@ public class CsvSchoolParser {
         List<School> schools = new ArrayList<>();
 
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(CSV_FILE_NAME);
-             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+             InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(streamReader)) {
 
             if (inputStream == null) {
-                throw new IOException("Файл " + CSV_FILE_NAME + " не найден в src/main/resources/");
+                throw new IOException("Файл " + CSV_FILE_NAME + " не найден в resources/");
             }
 
-            // 🔑 КЛЮЧЕВАЯ НАСТРОЙКА: TSV + кавычки
-            CSVParser parser = new CSVParserBuilder()
-                    .withSeparator('\t')          // табуляция
-                    .withQuoteChar('"')           // кавычки как quote-символ
-                    .withStrictQuotes(false)      // разрешить смешанные (не все в кавычках)
-                    .build();
+            String line;
+            boolean isHeader = true;
 
-            CSVReader csvReader = new CSVReaderBuilder(reader)
-                    .withCSVParser(parser)
-                    .withSkipLines(1) // пропустить заголовок
-                    .build();
+            while ((line = reader.readLine()) != null) {
+                if (isHeader) {
+                    isHeader = false;
+                    continue;
+                }
 
-            String[] line;
-            while ((line = csvReader.readNext()) != null) {
-                // Ваши данные: 15 колонок (из-за пустого ID в начале)
-                if (line.length != 15) {
-                    System.err.println("⚠️ Некорректная строка: ожидалось 15 колонок, получено " + line.length);
+                String[] fields = splitCsvLine(line);
+
+                if (fields.length != 15) {
                     continue;
                 }
 
                 try {
+                    String districtStr = unquote(fields[1]);
+                    String schoolName = unquote(fields[2]);
+                    String county = unquote(fields[3]);
+                    String grades = unquote(fields[4]);
+                    String studentsStr = unquote(fields[5]);
+
                     School school = new School(
-                            Integer.parseInt(line[1]),  // district
-                            line[2],                    // school
-                            line[3],                    // county
-                            line[4],                    // grades
-                            Integer.parseInt(line[5]),  // students
-                            Double.parseDouble(line[6]),// teachers
-                            Double.parseDouble(line[7]),// calworks
-                            Double.parseDouble(line[8]),// lunch
-                            Integer.parseInt(line[9]),  // computer
-                            Double.parseDouble(line[10]),// expenditure
-                            Double.parseDouble(line[11]),// income
-                            Double.parseDouble(line[12]),// english
-                            Double.parseDouble(line[13]),// read
-                            Double.parseDouble(line[14]) // math
+                            Integer.parseInt(districtStr),
+                            schoolName,
+                            county,
+                            grades,
+                            Integer.parseInt(studentsStr),
+                            Double.parseDouble(unquote(fields[6])),
+                            Double.parseDouble(unquote(fields[7])),
+                            Double.parseDouble(unquote(fields[8])),
+                            Integer.parseInt(unquote(fields[9])),
+                            Double.parseDouble(unquote(fields[10])),
+                            Double.parseDouble(unquote(fields[11])),
+                            Double.parseDouble(unquote(fields[12])),
+                            Double.parseDouble(unquote(fields[13])),
+                            Double.parseDouble(unquote(fields[14]))
                     );
                     schools.add(school);
                 } catch (NumberFormatException e) {
-                    System.err.println("❌ Ошибка числа в строке: " + String.join("|", line));
+                    // Пропускаем строки с некорректными числовыми полями
                 }
             }
-        } catch (Exception e) {
-            throw new IOException("Ошибка при чтении CSV", e);
         }
 
         return schools;
+    }
+
+    // Разделение CSV-строки с учётом кавычек
+    private String[] splitCsvLine(String line) {
+        List<String> result = new ArrayList<>();
+        boolean insideQuotes = false;
+        StringBuilder currentField = new StringBuilder();
+        for (char c : line.toCharArray()) {
+            if (c == '"') {
+                insideQuotes = !insideQuotes;
+                currentField.append(c);
+            } else if (c == ',' && !insideQuotes) {
+                result.add(currentField.toString());
+                currentField.setLength(0);
+            } else {
+                currentField.append(c);
+            }
+        }
+        result.add(currentField.toString());
+        return result.toArray(new String[0]);
+    }
+
+    // Убирает кавычки с начала и конца строки, если они есть
+    private String unquote(String s) {
+        if (s.startsWith("\"") && s.endsWith("\"") && s.length() >= 2) {
+            return s.substring(1, s.length() - 1);
+        }
+        return s;
     }
 }
