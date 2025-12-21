@@ -86,9 +86,9 @@ public class MainGUI extends JFrame {
 
             Double avgExp = service.getAverageExpenditureInCounties("Fresno", "Contra Costa", "El Dorado", "Glenn");
             if (avgExp != null && !avgExp.isNaN()) {
-                result.append(String.format("💰 Средние расходы в округах: $%.2f%n", avgExp));
+                result.append(String.format("Средние расходы в округах: $%.2f%n", avgExp));
             } else {
-                result.append("💰 Нет данных по указанным округам.\n");
+                result.append("Нет данных по указанным округам.\n");
             }
             result.append("\n");
 
@@ -100,7 +100,7 @@ public class MainGUI extends JFrame {
                 result.append(String.format("  Студентов: %d%n", topSchool.students()));
                 result.append(String.format("  Математика: %.1f%n", topSchool.math()));
             } else {
-                result.append("⚠️ Нет школ в заданных диапазонах.\n");
+                result.append("Нет школ в заданных диапазонах.\n");
             }
 
             resultsArea.setText(result.toString());
