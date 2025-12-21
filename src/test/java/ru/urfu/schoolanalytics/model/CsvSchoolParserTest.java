@@ -40,4 +40,6 @@ class CsvSchoolParserTest {
         assertEquals(195, school.students());
         assertEquals(690.0, school.math(), 0.01);
     }
+
+
 }
