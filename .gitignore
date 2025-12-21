@@ -40,3 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# SQLite database
+schools.db
+*.db-journal
