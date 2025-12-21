@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'application'
-    id 'jacoco'  // ✅ Возвращаем JaCoCo
+    // id 'jacoco'  // JaCoCo
 }
 
 group = 'ru.urfu'
@@ -28,45 +28,20 @@ test {
     useJUnitPlatform()
 }
 
+//Всё, что связано с JaCoCo
+/*
 jacoco {
-    toolVersion = "0.8.12"  // ✅ Обновлённая версия, поддерживает Java 21
+    toolVersion = "0.8.12"
 }
 
 jacocoTestReport {
     dependsOn test
-
-    // ✅ Исключаем сторонние библиотеки, вызывающие ошибки
-    classDirectories.setFrom(
-            files(
-                    classDirectories.files.collect {
-                        fileTree(dir: it, excludes: [
-                                // Исключаем нативные библиотеки и драйверы
-                                '**/org/sqlite/**',
-                                '**/org/xerial/**',
-                                '**/native/**',
-                                '**/jni/**',
-                                // Другие сторонние библиотеки, если нужно
-                                '**/com/opencsv/**',
-                                '**/org/jfree/**',
-                                '**/org/jcommon/**'
-                        ])
-                    }
-            )
-    )
-
-    sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
-    executionData.setFrom(files("${buildDir}/jacoco/test.exec"))
-
     reports {
         xml.required = true
         html.required = true
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
-
-    // ✅ Не падать, если .exec файл не создан (если нет тестов)
-    onlyIf = {
-        executionData.files.any { it.exists() }
-    }
 }
 
-check.dependsOn jacocoTestReport  // ✅ Добавляем отчёт в задачу check
+check.dependsOn jacocoTestReport
+*/
