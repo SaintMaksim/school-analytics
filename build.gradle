@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'jacoco'
 }
 
 group = 'ru.urfu'
@@ -10,16 +12,49 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
     implementation 'com.opencsv:opencsv:5.9'
-    implementation 'org.xerial:sqlite-jdbc:3.45.0.0'
     implementation 'org.jfree:jfreechart:1.5.4'
-    implementation 'org.slf4j:slf4j-simple:2.0.12'
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'ru.urfu.schoolanalytics.view.MainGUI'
 }
 
 test {
     useJUnitPlatform()
 }
+
+jacoco {
+    toolVersion = "0.8.12"  // ✅ Обновлено
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    // ✅ Полностью исключить из отчёта нативные библиотеки
+    def excludedClasses = [
+            '**/org/sqlite/**',
+            '**/SQLiteJDBCLoader**',
+            '**/org/xerial/**',
+            '**/native/**',
+            '**/jni/**'
+    ]
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, excludes: excludedClasses)
+        }))
+    }
+
+    reports {
+        xml.required = true
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
+}
+
+check.dependsOn jacocoTestReport

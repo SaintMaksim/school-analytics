@@ -1,6 +1,5 @@
-package ru.urfu.schoolanalytics.database;
+package ru.urfu.schoolanalytics.model;
 
-import ru.urfu.schoolanalytics.model.School;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +39,10 @@ public class DatabaseManager {
     }
 
     public void saveSchools(List<School> schools) throws SQLException {
+        try (Statement clearStmt = connection.createStatement()) {
+            clearStmt.execute("DELETE FROM schools;");
+        }
+
         String sql = """
             INSERT INTO schools (
                 district, school_name, county, grades, students,
@@ -73,7 +76,6 @@ public class DatabaseManager {
         }
     }
 
-    // ============ ЗАПРОС 1: Среднее число студентов по 10 округам ============
     public List<CountyAvg> getAverageStudentsByCounty(int limit) throws SQLException {
         String sql = """
             SELECT county, AVG(students) as avg_students
@@ -93,7 +95,6 @@ public class DatabaseManager {
         return result;
     }
 
-    // ============ ЗАПРОС 2: Средние расходы в указанных округах ============
     public Double getAverageExpenditureInCounties(String... counties) throws SQLException {
         if (counties.length == 0) return null;
 
@@ -115,11 +116,11 @@ public class DatabaseManager {
                 stmt.setString(i + 1, counties[i]);
             }
             ResultSet rs = stmt.executeQuery();
-            return rs.getDouble(1);
+            double result = rs.getDouble(1);
+            return rs.wasNull() ? null : result;
         }
     }
 
-    // ============ ЗАПРОС 3: Лучшая школа по математике в диапазонах студентов ============
     public School getTopMathSchoolInStudentRanges() throws SQLException {
         String sql = """
             SELECT district, school_name, county, grades, students,
@@ -152,7 +153,7 @@ public class DatabaseManager {
                 );
             }
         }
-        return null; // не найдено
+        return null;
     }
 
     public void close() throws SQLException {
@@ -161,6 +162,5 @@ public class DatabaseManager {
         }
     }
 
-    // Вспомогательный record для запроса 1
     public record CountyAvg(String county, double avgStudents) {}
 }
