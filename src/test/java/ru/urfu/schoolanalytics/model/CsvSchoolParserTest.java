@@ -29,7 +29,7 @@ class CsvSchoolParserTest {
 
     @Test
     void testParseReturnsCorrectSchool() throws IOException {
-        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString()); // передаём путь
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
         List<School> schools = parser.parse();
 
         assertEquals(1, schools.size());
@@ -41,5 +41,60 @@ class CsvSchoolParserTest {
         assertEquals(690.0, school.math(), 0.01);
     }
 
+    @Test
+    void testParseWithMultipleValidRows() throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile.toFile(), true)) {
+            writer.write("\"2\",\"12345\",\"Another School\",\"Orange\",\"06-12\",500,25.0,0.1,0.2,100,5000.0,60000.0,0.5,0.6,700.0\n");
+        }
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
+        List<School> schools = parser.parse();
 
+        assertEquals(2, schools.size());
+        assertEquals("Another School", schools.get(1).schoolName());
+    }
+
+    @Test
+    void testParseHandlesEmptyRow() throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile.toFile(), true)) {
+            writer.write("\n");
+        }
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
+        List<School> schools = parser.parse();
+
+        assertEquals(1, schools.size());
+    }
+
+    @Test
+    void testParseHandlesRowWithIncorrectColumnCount() throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile.toFile(), true)) {
+            writer.write("\"3\",\"12345\",\"Bad Row\",\"County\"\n");
+        }
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
+        List<School> schools = parser.parse();
+
+        assertEquals(1, schools.size());
+    }
+
+    @Test
+    void testParseHandlesQuotedFieldsCorrectly() throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile.toFile(), true)) {
+            writer.write("\"4\",\"12346\",\"\"\"Quoted\"\" School\",\"Kern\",\"KK-08\",300,15.0,0.05,0.1,50,4500.0,55000.0,0.55,0.65,710.0\n");
+        }
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
+        List<School> schools = parser.parse();
+
+        assertEquals(2, schools.size());
+        assertEquals("Quoted School", schools.get(1).schoolName());
+    }
+
+    @Test
+    void testParseHandlesInvalidNumberInNumericField() throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile.toFile(), true)) {
+            writer.write("\"5\",\"abc\",\"Invalid Number\",\"County\",\"KK-08\",300,15.0,0.05,0.1,50,4500.0,55000.0,0.55,0.65,720.0\n"); // district не число
+        }
+        CsvSchoolParser parser = new CsvSchoolParser(csvFile.toString());
+        List<School> schools = parser.parse();
+
+        assertEquals(1, schools.size());
+    }
 }
