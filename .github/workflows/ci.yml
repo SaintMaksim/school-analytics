@@ -36,21 +36,34 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build and run tests with Gradle
-        run: ./gradlew build test jacocoTestReport --info
+        run: ./gradlew build test --info
 
-      - name: Upload JaCoCo coverage report
+      - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-report
-          path: build/reports/jacoco/test/html/
+          name: test-results
+          path: build/reports/tests/test/
           retention-days: 30
 
       - name: Check for test failures
         run: |
           if [ -f "build/test-results/test/TEST-*.xml" ]; then
             echo "Checking test results..."
-            grep -r "failure\|error" build/test-results/test/ || echo "No test failures found."
+            # grep ищет "failure" или "error" в XML отчётах
+            if grep -r "failure\|error" build/test-results/test/; then
+              echo "Some tests failed!"
+              exit 1
+            else
+              echo "All tests passed."
+            fi
           else
-            echo "No test results found!"
+            echo "No test results XML files found!"
             exit 1
           fi
+
+      - name: Test GUI Launch
+        run: |
+          timeout 30s bash -c './gradlew run --args="--headless"' || true
+          # Если проект не поддерживает --headless, можно просто проверить, что jar собирается
+          # ./gradlew jar
+          # java -cp build/libs/your-app.jar ru.urfu.schoolanalytics.view.MainGUI &

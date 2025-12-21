@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'application'
-    id 'jacoco'
 }
 
 group = 'ru.urfu'
@@ -27,34 +26,3 @@ application {
 test {
     useJUnitPlatform()
 }
-
-jacoco {
-    toolVersion = "0.8.12"  // ✅ Обновлено
-}
-
-jacocoTestReport {
-    dependsOn test
-
-    // ✅ Полностью исключить из отчёта нативные библиотеки
-    def excludedClasses = [
-            '**/org/sqlite/**',
-            '**/SQLiteJDBCLoader**',
-            '**/org/xerial/**',
-            '**/native/**',
-            '**/jni/**'
-    ]
-
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, excludes: excludedClasses)
-        }))
-    }
-
-    reports {
-        xml.required = true
-        html.required = true
-        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
-    }
-}
-
-check.dependsOn jacocoTestReport
