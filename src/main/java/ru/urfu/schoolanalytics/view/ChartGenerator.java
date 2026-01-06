@@ -7,14 +7,13 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import ru.urfu.schoolanalytics.model.DatabaseManager;
 
 import java.awt.Font;
-import java.sql.SQLException;
+import java.util.List;
 
 public class ChartGenerator {
 
-    public static ChartPanel generateAvgStudentsByCountyChart(DatabaseManager db) throws SQLException {
-        var data = db.getAverageStudentsByCounty(10);
-
+    public static ChartPanel generateAvgStudentsByCountyChart(List<DatabaseManager.CountyAvg> data) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
         for (var entry : data) {
             String countyLabel = entry.county().length() > 15
                     ? entry.county().substring(0, 14) + "…"

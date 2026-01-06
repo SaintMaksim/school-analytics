@@ -17,7 +17,6 @@ public class CsvSchoolParser {
         this.csvFileName = CSV_FILE_NAME;
     }
 
-    // Конструктор для тестов
     public CsvSchoolParser(String csvFileName) {
         this.csvFileName = csvFileName;
     }
@@ -25,9 +24,7 @@ public class CsvSchoolParser {
     public List<School> parse() throws IOException {
         List<School> schools = new ArrayList<>();
 
-        // Проверяем, является ли csvFileName путем к файлу
         if (java.nio.file.Files.exists(java.nio.file.Paths.get(csvFileName))) {
-            // Это путь к файлу (для тестов)
             try (var reader = new BufferedReader(new java.io.FileReader(csvFileName))) {
                 String line;
                 boolean isHeader = true;

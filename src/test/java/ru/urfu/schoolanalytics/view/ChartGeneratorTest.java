@@ -1,83 +1,69 @@
 package ru.urfu.schoolanalytics.view;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.List;
-
 import ru.urfu.schoolanalytics.model.DatabaseManager;
-import ru.urfu.schoolanalytics.model.School;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ChartGeneratorTest {
 
-    @TempDir
-    Path tempDir;
-
-    private DatabaseManager db;
-    private Path dbFile;
-
-    @BeforeEach
-    void setUp() throws SQLException {
-        dbFile = tempDir.resolve("test.db");
-        System.setProperty("jdbc.url", "jdbc:sqlite:" + dbFile.toAbsolutePath());
-        db = new DatabaseManager();
-    }
-
     @Test
-    void testGenerateAvgStudentsByCountyChart() throws SQLException {
-        School school = new School(1, "Test School", "Test County", "KK-08", 200, 5.0, 0.1, 0.2, 10, 5000.0, 6000.0, 0.5, 0.6, 0.7);
-        db.saveSchools(List.of(school));
+    void testGenerateAvgStudentsByCountyChartWithData() {
+        List<DatabaseManager.CountyAvg> data = List.of(
+                new DatabaseManager.CountyAvg("County A", 150.5),
+                new DatabaseManager.CountyAvg("County B", 200.0),
+                new DatabaseManager.CountyAvg("County C", 180.3)
+        );
 
-        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(db);
+        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(data);
+
         assertNotNull(chartPanel);
+        assertNotNull(chartPanel.getChart());
+        assertEquals("Среднее число студентов по 10 округам",
+                chartPanel.getChart().getTitle().getText());
     }
 
     @Test
-    void testGenerateAvgStudentsByCountyChartWithNoData() throws SQLException {
-        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(db);
+    void testGenerateAvgStudentsByCountyChartWithEmptyData() {
+        List<DatabaseManager.CountyAvg> emptyData = List.of();
+
+        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(emptyData);
+
         assertNotNull(chartPanel);
+        assertNotNull(chartPanel.getChart());
     }
 
     @Test
-    void testGenerateAvgStudentsByCountyChartWithMultipleCounties() throws SQLException {
-        for (int i = 1; i <= 12; i++) { // 12 округов
-            School school = new School(i, "School " + i, "County " + i, "KK-08", 100 + i * 10, 5.0, 0.1, 0.2, 10, 5000.0, 6000.0, 0.5, 0.6, 0.7);
-            db.saveSchools(List.of(school));
-        }
+    void testGenerateAvgStudentsByCountyChartWithLongCountyNames() {
+        List<DatabaseManager.CountyAvg> data = List.of(
+                new DatabaseManager.CountyAvg("Very Long County Name That Should Be Truncated", 150.5),
+                new DatabaseManager.CountyAvg("Short", 200.0)
+        );
 
-        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(db);
+        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(data);
+
         assertNotNull(chartPanel);
+        assertNotNull(chartPanel.getChart());
     }
 
     @Test
-    void testGenerateAvgStudentsByCountyChartWithLongCountyName() throws SQLException {
-        School school = new School(1, "School", "VeryLongCountyNameThatShouldBeTruncatedInChart", "KK-08", 200, 5.0, 0.1, 0.2, 10, 5000.0, 6000.0, 0.5, 0.6, 0.7);
-        db.saveSchools(List.of(school));
+    void testGenerateAvgStudentsByCountyChartWithSingleCounty() {
+        List<DatabaseManager.CountyAvg> data = List.of(
+                new DatabaseManager.CountyAvg("Single County", 100.0)
+        );
 
-        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(db);
+        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(data);
+
         assertNotNull(chartPanel);
+        assertNotNull(chartPanel.getChart());
     }
 
     @Test
-    void testGenerateAvgStudentsByCountyChartHandlesSqlException() {
-        assertDoesNotThrow(() -> ChartGenerator.generateAvgStudentsByCountyChart(db));
-    }
-
-    @Test
-    void testGenerateAvgStudentsByCountyChartWithDuplicateCountyNames() throws SQLException {
-        School school1 = new School(1, "School 1", "Duplicate County", "KK-08", 200, 5.0, 0.1, 0.2, 10, 5000.0, 6000.0, 0.5, 0.6, 0.7);
-        School school2 = new School(2, "School 2", "Duplicate County", "KK-08", 300, 5.0, 0.1, 0.2, 10, 5000.0, 6000.0, 0.5, 0.6, 0.7);
-        db.saveSchools(List.of(school1, school2));
-
-        var chartPanel = ChartGenerator.generateAvgStudentsByCountyChart(db);
-        assertNotNull(chartPanel);
-        List<DatabaseManager.CountyAvg> result = db.getAverageStudentsByCounty(10);
-        assertEquals(1, result.size());
-        assertEquals(250.0, result.get(0).avgStudents(), 0.01);
+    void testGenerateAvgStudentsByCountyChartWithNullData() {
+        assertThrows(NullPointerException.class, () -> {
+            ChartGenerator.generateAvgStudentsByCountyChart(null);
+        });
     }
 }

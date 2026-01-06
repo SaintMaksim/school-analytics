@@ -5,11 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseManager {
-    private static final String DB_URL = "jdbc:sqlite:schools.db";
+    private static final String DEFAULT_DB_URL = "jdbc:sqlite:schools.db";
     private Connection connection;
 
     public DatabaseManager() throws SQLException {
-        this.connection = DriverManager.getConnection(DB_URL);
+        this(DEFAULT_DB_URL);
+    }
+
+    public DatabaseManager(String dbUrl) throws SQLException {
+        this.connection = DriverManager.getConnection(dbUrl);
         createTables();
     }
 
